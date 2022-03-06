@@ -14,8 +14,16 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: RandomWords(),
+    return MaterialApp(
+      home: const RandomWords(),
+      theme: ThemeData(
+        brightness: Brightness.dark,
+        primaryColor: Colors.lightBlue[800],
+        textTheme: const TextTheme(
+          bodyText2: TextStyle(fontSize: 14.0, fontFamily: 'Montserrat'),
+        ),
+      ),
+			debugShowCheckedModeBanner: false,
     );
   }
 }
@@ -72,12 +80,12 @@ class _RandomWordsState extends State<RandomWords> {
         title: const Text('Startup Name Generator'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.list),
+            icon: const Icon(Icons.favorite_border),
             onPressed: _pushSaved,
             tooltip: 'Saved Suggestions',
           ),
           IconButton(
-            icon: const Icon(Icons.list),
+            icon: const Icon(Icons.crop_square),
             onPressed: () {
               setState(() {
                 _openned = !_openned;
@@ -120,10 +128,8 @@ class _RandomWordsState extends State<RandomWords> {
             _suggestions.addAll(generateWordPairs().take(10));
           }
 
-			return Card(
-				child: _buildRow(_suggestions[index])
-			);
-		},
+          return Card(child: _buildRow(_suggestions[index]));
+        },
       );
     }
   }
