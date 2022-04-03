@@ -15,7 +15,6 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: const RandomWords(),
       theme: ThemeData(
         brightness: Brightness.dark,
         primaryColor: Colors.lightBlue[800],
@@ -23,9 +22,21 @@ class MyApp extends StatelessWidget {
           bodyText2: TextStyle(fontSize: 14.0, fontFamily: 'Montserrat'),
         ),
       ),
-			debugShowCheckedModeBanner: false,
+      initialRoute: '/',
+      routes: {
+        _RandomWordsState.routeName: (context) => const RandomWords(),
+        _EditPageState.routeName: (context) => const EditPage()
+      },
+      debugShowCheckedModeBanner: false,
     );
   }
+}
+
+class EditPage extends StatefulWidget {
+  const EditPage({Key? key}) : super(key: key);
+
+  @override
+  _EditPageState createState() => _EditPageState();
 }
 
 class RandomWords extends StatefulWidget {
@@ -35,10 +46,79 @@ class RandomWords extends StatefulWidget {
   _RandomWordsState createState() => _RandomWordsState();
 }
 
+class NewWordPair {
+	String firstWord;
+	String secondWord;
+
+	getFirstWord() {
+		return firstWord;
+	}
+
+	getSecondWord() {
+		return secondWord;
+	}
+
+	mountPair() {
+		return firstWord + secondWord;
+	}
+
+	NewWordPair(this.firstWord, this.secondWord);
+}
+
+class Repository {
+	List wordsList = [];
+
+	getAllList() {
+		return wordsList;
+	}
+
+	getWordIndex(string) {
+		return wordsList.indexOf(string);
+	}
+
+  insertWord(String element) {
+    wordsList.add(element);
+  }
+}
+
+class _EditPageState extends State<EditPage> {
+  @override
+	static const routeName = '/edit';
+
+  Widget build(BuildContext context) {
+		final wordArguments = (ModalRoute.of(context)?.settings.arguments?? <int, String>{}) as Map;
+		final edittingController = TextEditingController(text: wordArguments['currentWord'].toString());
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Startup Name Generator'),
+      ),
+      body: Column(
+					children: [
+						TextField(
+							controller: edittingController
+						),
+						TextButton(
+              child: const Text('Salvar Palavra'),
+              onPressed: () {
+                setState(() {
+                  wordArguments['wordsList'][wordArguments['wordsList'].indexOf(wordArguments['currentWord'])] = edittingController.text;
+
+                  Navigator.popAndPushNamed(context, '/');
+                });
+              },
+            ),
+				]
+			)
+    );
+  }
+}
+
 class _RandomWordsState extends State<RandomWords> {
-  final _saved = <WordPair>{};
+  final _saved = [];
+  final repository = Repository();
+	static const routeName = '/';
   bool _openned = true;
-  final _suggestions = <WordPair>[];
   final _biggerFont = const TextStyle(fontSize: 18.0);
 
   void _pushSaved() {
@@ -109,11 +189,11 @@ class _RandomWordsState extends State<RandomWords> {
 
           final int index = i ~/ 2;
 
-          if (index >= _suggestions.length) {
-            _suggestions.addAll(generateWordPairs().take(10));
+          if (index >= repository.getAllList().length) {
+            repository.insertWord(NewWordPair(nouns[i], nouns[i + 1]).mountPair());
           }
 
-          return _buildRow(_suggestions[index]);
+          return _buildRow(repository.wordsList[index]);
         },
       );
     } else {
@@ -122,50 +202,53 @@ class _RandomWordsState extends State<RandomWords> {
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2, mainAxisSpacing: 4),
         itemBuilder: (context, i) {
-          final int index = i;
-
-          if (index >= _suggestions.length) {
-            _suggestions.addAll(generateWordPairs().take(10));
+          if (i >= repository.getAllList().length) {
+            repository.insertWord(NewWordPair(nouns[i], nouns[i + 1]).mountPair());
           }
 
-          return Card(child: _buildRow(_suggestions[index]));
+          return Card(child: _buildRow(repository.wordsList[i]));
         },
       );
     }
   }
 
-  Widget _buildRow(WordPair pair) {
+  Widget _buildRow(String pair) {
     final alreadySaved = _saved.contains(pair);
 
     return ListTile(
-      title: Text(
-        pair.asPascalCase,
-        style: _biggerFont,
-      ),
-      trailing: Container(
-        width: 100,
-        child: Row(
-          children: [
-            IconButton(
-              icon: alreadySaved ? const Icon(Icons.favorite) : const Icon(Icons.favorite_border),
-              color: alreadySaved ? Colors.red : null,
-              onPressed: () {
-                setState(() {
-                  alreadySaved ? _saved.remove(pair) : _saved.add(pair);
-                });
-              },
-            ),
-            IconButton(
-                icon: const Icon(Icons.delete),
-                onPressed: () {
-                  setState(() {
-                    _suggestions.remove(pair);
-                    _saved.remove(pair);
-                  });
-                })
-          ],
-        )
-      )
-    );
+        title: Text(
+          pair,
+          style: _biggerFont,
+        ),
+        onTap: () {
+					setState(() {
+						Navigator.pushNamed(context, '/edit', arguments: {'wordsList': repository.getAllList(), 'currentWord': pair});
+					});
+				},
+        trailing: Container(
+            width: 100,
+            child: Row(
+              children: [
+                IconButton(
+                  icon: alreadySaved
+                      ? const Icon(Icons.favorite)
+                      : const Icon(Icons.favorite_border),
+                  color: alreadySaved ? Colors.red : null,
+                  onPressed: () {
+                    setState(() {
+                      alreadySaved ? _saved.remove(pair) : _saved.add(pair);
+                    });
+                  },
+                ),
+                IconButton(
+                    icon: const Icon(Icons.delete),
+                    onPressed: () {
+                      setState(() {
+                        repository.getAllList().remove(pair);
+                        _saved.remove(pair);
+                      });
+                    })
+              ],
+            )));
   }
 }
