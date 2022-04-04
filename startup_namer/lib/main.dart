@@ -83,34 +83,63 @@ class Repository {
 
 class _EditPageState extends State<EditPage> {
   @override
-	static const routeName = '/edit';
+	static const routeName = '/form';
 
   Widget build(BuildContext context) {
-		final wordArguments = (ModalRoute.of(context)?.settings.arguments?? <int, String>{}) as Map;
-		final edittingController = TextEditingController(text: wordArguments['currentWord'].toString());
+		final wordArguments = (ModalRoute.of(context)?.settings.arguments?? <List, String>{}) as Map;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Startup Name Generator'),
-      ),
-      body: Column(
-					children: [
-						TextField(
-							controller: edittingController
-						),
-						TextButton(
-              child: const Text('Salvar Palavra'),
-              onPressed: () {
-                setState(() {
-                  wordArguments['wordsList'][wordArguments['wordsList'].indexOf(wordArguments['currentWord'])] = edittingController.text;
+		if (wordArguments['currentWord'] != null) {
+			final edittingController = TextEditingController(text: wordArguments['currentWord'].toString());
 
-                  Navigator.popAndPushNamed(context, '/');
-                });
-              },
-            ),
-				]
-			)
-    );
+			return Scaffold(
+				appBar: AppBar(
+					title: const Text('Startup Name Generator'),
+				),
+				body: Column(
+						children: [
+							TextField(
+								controller: edittingController
+							),
+							TextButton(
+								child: const Text('Editar Palavra'),
+								onPressed: () {
+									setState(() {
+										print(wordArguments['wordsList']);
+										wordArguments['wordsList'][wordArguments['wordsList'].indexOf(wordArguments['currentWord'])] = edittingController.text;
+
+										Navigator.popAndPushNamed(context, '/');
+									});
+								},
+							),
+					]
+				)
+			);
+		} else {
+			final addController = TextEditingController();
+
+			return Scaffold(
+				appBar: AppBar(
+					title: const Text('Startup Name Generator'),
+				),
+				body: Column(
+						children: [
+							TextField(
+								controller: addController
+							),
+							TextButton(
+								child: const Text('Salvar Palavra'),
+								onPressed: () {
+									setState(() {
+										wordArguments['wordsList'].insert(0, addController.text);
+
+										Navigator.popAndPushNamed(context, '/');
+									});
+								},
+							),
+					]
+				)
+			);
+		}
   }
 }
 
@@ -129,7 +158,7 @@ class _RandomWordsState extends State<RandomWords> {
             (pair) {
               return ListTile(
                 title: Text(
-                  pair.asPascalCase,
+                  pair,
                   style: _biggerFont,
                 ),
               );
@@ -163,6 +192,15 @@ class _RandomWordsState extends State<RandomWords> {
             icon: const Icon(Icons.favorite_border),
             onPressed: _pushSaved,
             tooltip: 'Saved Suggestions',
+          ),
+					IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () {
+							setState(() {
+								Navigator.pushNamed(context, '/form', arguments: {'wordsList': repository.getAllList(), 'currentWord': null});
+							});
+						},
+            tooltip: 'Add Name',
           ),
           IconButton(
             icon: const Icon(Icons.crop_square),
@@ -222,7 +260,7 @@ class _RandomWordsState extends State<RandomWords> {
         ),
         onTap: () {
 					setState(() {
-						Navigator.pushNamed(context, '/edit', arguments: {'wordsList': repository.getAllList(), 'currentWord': pair});
+						Navigator.pushNamed(context, '/form', arguments: {'wordsList': repository.getAllList(), 'currentWord': pair});
 					});
 				},
         trailing: Container(
